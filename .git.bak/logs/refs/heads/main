@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ae874711bea828a85b59a32dfc18acccaf1c036e iAmKevinCruz <kcruz@varfaj.com> 1763177163 -0500	clone: from https://github.com/LionyxML/emacs-kick.git
+ae874711bea828a85b59a32dfc18acccaf1c036e 69182dfcdeab54dd3cc378e1fa72d913d08052fa iAmKevinCruz <kcruz@varfaj.com> 1763316477 -0800	commit: wip prettier orgmode (broken)
+69182dfcdeab54dd3cc378e1fa72d913d08052fa 4418355e51b1c1b8c46ac5efae513d8aca658853 iAmKevinCruz <kcruz@varfaj.com> 1766028607 -0500	commit: updates to org roam dirvish and cape
+4418355e51b1c1b8c46ac5efae513d8aca658853 4418355e51b1c1b8c46ac5efae513d8aca658853 iAmKevinCruz <kcruz@varfaj.com> 1766028716 -0500	Branch: renamed refs/heads/master to refs/heads/main
