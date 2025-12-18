@@ -1660,3 +1660,28 @@
 
 ;; Also refresh before building the agenda (catches files before display)
 (advice-add 'org-agenda :before (lambda (&rest _) (ek/refresh-org-agenda-files)))
+
+
+;;; GIT-AUTO-COMMIT-MODE
+;; Automatically commit changes when saving files in a git repository.
+;; Great for org-mode files where you want continuous version history.
+(use-package git-auto-commit-mode
+  :ensure t
+  :straight t
+  :init
+  (setq gac-automatically-push-p t)
+  :config
+  (setq gac-default-message
+        (lambda (filename)
+          (format "Auto-save: %s" (file-name-nondirectory filename)))))
+
+;; Enable git-auto-commit-mode for all org files in ~/org/
+(defun ek/maybe-enable-git-auto-commit ()
+  "Enable git-auto-commit-mode for org files in ~/org/."
+  (when (and buffer-file-name
+             (string-prefix-p (expand-file-name "~/org")
+                              (file-truename buffer-file-name)))
+    (git-auto-commit-mode 1)
+    (message "git-auto-commit-mode enabled for %s" buffer-file-name)))
+
+(add-hook 'org-mode-hook #'ek/maybe-enable-git-auto-commit)
