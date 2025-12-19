@@ -266,6 +266,8 @@
 
   (global-hl-line-mode -1)     ;; Disable highlight of the current line
   (global-auto-revert-mode 1)  ;; Enable global auto-revert mode to keep buffers up to date with their corresponding files.
+  (electric-pair-mode 1)       ;; Auto-close brackets, parens, quotes
+  (global-display-fill-column-indicator-mode 1) ;; Show vertical line at fill-column (100)
   (recentf-mode 1)             ;; Enable tracking of recently opened files.
   (savehist-mode 1)            ;; Enable saving of command history.
   (save-place-mode 1)          ;; Enable saving the place in files for easier return.
@@ -528,6 +530,8 @@
   :ensure nil     ;; This is built-in, no need to fetch it.
   :defer t
   :config
+  ;; Enable org-tempo for easy block insertion (<s TAB for src blocks)
+  (require 'org-tempo)
   ;; org-agenda-files is dynamically refreshed via ek/refresh-org-agenda-files (see bottom of file)
   ;; (setq org-todo-keywords
   ;;       '((sequence "TODO" "WIP" "AWAP" "|" "DONE" "DELEGATED")))
@@ -540,11 +544,72 @@
           ("AWAP" . org-level-1)
           ("DONE" . org-done)
           ("CANCELED" . org-headline-done)
-          ("HOLD" . (:foreground "#D08770" :weight bold :slant italic)))))
-          ;; ("CANCELED" . (:foreground org-headline-done :strike-through org-headline-done :weight bold :slant italic)))))
-; (setq org-agenda-files '("~/org"))
-; (setq org-agenda-files (directory-files-recursively "~/org" "\\.org$"))
-; (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
+          ("HOLD" . (:foreground "#D08770" :weight bold :slant italic))))
+
+  ;; Custom agenda views
+  (setq org-agenda-custom-commands
+        '(("p" "Projects Overview"
+           ((agenda "" ((org-agenda-span 14)
+                        (org-agenda-overriding-header "Upcoming Deadlines")))
+            (tags-todo "hydrafacial"
+                       ((org-agenda-overriding-header "Hydrafacial")))
+            (tags-todo "issa"
+                       ((org-agenda-overriding-header "ISSA")))
+            (tags-todo "metawatt"
+                       ((org-agenda-overriding-header "Metawatt")))
+            (tags-todo "aops"
+                       ((org-agenda-overriding-header "AoPS")))
+            (tags-todo "pact"
+                       ((org-agenda-overriding-header "Pact")))
+            (tags-todo "torchguys"
+                       ((org-agenda-overriding-header "Torchguys")))
+            (tags-todo "-hydrafacial-issa-metawatt-aops-pact-torchguys"
+                       ((org-agenda-overriding-header "Untagged / Other")))))
+          ("d" "Daily View"
+           ((agenda "" ((org-agenda-span 'day)))
+            (alltodo "" ((org-agenda-overriding-header "All TODOs")))))))
+
+  ;; Better agenda sorting - show WIP first, then TODO
+  (setq org-agenda-sorting-strategy
+        '((agenda habit-down time-up priority-down category-keep)
+          (todo todo-state-down priority-down category-keep)
+          (tags priority-down category-keep)
+          (search category-keep)))
+
+  ;; Deadline display settings
+  (setq org-deadline-warning-days 7)              ;; Warn 7 days before deadline
+  (setq org-agenda-show-future-repeats 'next)     ;; Show next repeat only
+  (setq org-agenda-skip-deadline-if-done t)       ;; Hide completed deadlines
+  (setq org-agenda-skip-scheduled-if-done t)      ;; Hide completed scheduled items
+
+  ;; Format for deadline/scheduled display
+  (setq org-agenda-deadline-leaders '("DUE!  " "In %2dd: " "%2dd ago: "))
+  (setq org-agenda-scheduled-leaders '("SCHD: " "S.%2dx: ")))
+
+
+;;; ORG-SUPER-AGENDA
+;; Supercharge org-agenda with automatic grouping by tags, priority, etc.
+(use-package org-super-agenda
+  :ensure t
+  :straight t
+  :after org
+  :config
+  (org-super-agenda-mode 1)
+
+  ;; Auto-group TODOs by tag in the standard agenda view
+  (setq org-super-agenda-groups
+        '(;; First, items with time/date
+          (:name "Schedule" :time-grid t :order 1)
+          (:name "Due Today" :deadline today :order 2)
+          (:name "Overdue" :deadline past :order 3)
+
+          ;; In Progress items first
+          (:name "In Progress" :todo "WIP" :order 4)
+          (:name "Awaiting" :todo "AWAP" :order 5)
+          (:name "On Hold" :todo "HOLD" :order 6)
+
+          ;; Group by project tags - auto-groups any tag
+          (:auto-tags t :order 10))))
 
 
 ;;; WHICH-KEY
@@ -692,7 +757,7 @@
 ;;; MARKDOWN-MODE
 ;; Markdown Mode provides support for editing Markdown files in Emacs,
 ;; enabling features like syntax highlighting, previews, and more.
-;; It’s particularly useful for README files, as it can be set
+;; It's particularly useful for README files, as it can be set
 ;; to use GitHub Flavored Markdown for enhanced compatibility.
 (use-package markdown-mode
   :defer t
@@ -700,6 +765,30 @@
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)            ;; Use gfm-mode for README.md files.
   :init (setq markdown-command "multimarkdown")) ;; Set the Markdown processing command.
+
+
+;;; JSON-MODE
+;; Syntax highlighting for JSON files and org source blocks
+(use-package json-mode
+  :ensure t
+  :straight t
+  :defer t)
+
+
+;;; GO-MODE
+;; Syntax highlighting for Go files and org source blocks
+(use-package go-mode
+  :ensure t
+  :straight t
+  :defer t)
+
+
+;;; GRAPHQL-MODE
+;; Syntax highlighting for GraphQL files and org source blocks
+(use-package graphql-mode
+  :ensure t
+  :straight t
+  :defer t)
 
 
 ;;; CORFU
@@ -1074,6 +1163,16 @@
   (evil-define-key 'normal 'global (kbd "<leader> o i T") 'org-insert-todo-subheading)
   (evil-define-key 'normal 'global (kbd "<leader> f o") 'consult-org-heading)
   (evil-define-key 'normal 'global (kbd "<leader> t m") 'org-toggle-link-display)
+
+  ;; Org-agenda keybindings
+  (evil-define-key 'normal 'global (kbd "<leader> o a") 'org-agenda)           ;; Open agenda dispatcher
+  (evil-define-key 'normal 'global (kbd "<leader> o p") (lambda () (interactive) (org-agenda nil "p"))) ;; Projects view
+  (evil-define-key 'normal 'global (kbd "<leader> o d") (lambda () (interactive) (org-agenda nil "d"))) ;; Daily view
+
+  ;; Evil scroll in org-agenda
+  (evil-define-key 'motion org-agenda-mode-map
+    (kbd "C-d") 'evil-scroll-down
+    (kbd "C-u") 'evil-scroll-up)
 
   ;; Org-Roam keybindings
   (evil-define-key 'normal 'global (kbd "<leader> n l") 'org-roam-buffer-toggle)
@@ -1681,7 +1780,16 @@
   (when (and buffer-file-name
              (string-prefix-p (expand-file-name "~/org")
                               (file-truename buffer-file-name)))
-    (git-auto-commit-mode 1)
-    (message "git-auto-commit-mode enabled for %s" buffer-file-name)))
+    (git-auto-commit-mode 1)))
 
 (add-hook 'org-mode-hook #'ek/maybe-enable-git-auto-commit)
+
+;; Refresh diff-hl after git-auto-commit commits
+(defun ek/refresh-diff-hl-after-commit (&rest _)
+  "Refresh diff-hl indicators after auto-commit."
+  (run-with-timer 1 nil
+                  (lambda ()
+                    (when (bound-and-true-p diff-hl-mode)
+                      (diff-hl-update)))))
+
+(advice-add 'gac-commit :after #'ek/refresh-diff-hl-after-commit)
